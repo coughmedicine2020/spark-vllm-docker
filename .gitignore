@@ -1,1 +1,5 @@
 .env
+__pycache__
+mods/
+vllm-rtx6000-latest-backup.tar
+SM120_ADAPTATION.md
