@@ -1,5 +1,5 @@
 
-# vLLM Docker Optimized for DGX Spark (single or multi-node)
+# vLLM Docker Optimized for DGX Spark & RTX PRO 6000 Blackwell (single or multi-node)
 
 This repository contains the Docker configuration and startup scripts to run a multi-node vLLM inference cluster using Ray. It supports InfiniBand/RDMA (NCCL) and custom environment configuration for high-performance setups.
 
@@ -1218,4 +1218,12 @@ The `hf-download.sh` script provides a convenient way to download models from Hu
 
 ### Hardware Architecture
 
-**Note:** This project targets `12.1a` architecture (NVIDIA GB10 / DGX Spark). If you are using different hardware, you can use `--gpu-arch` flag in `./build-and-copy.sh`.
+**Note:** The Dockerfile defaults to `TORCH_CUDA_ARCH_LIST=12.0a` (NVIDIA Blackwell SM120, RTX PRO 6000). For DGX Spark GB10 (SM121), use `--cuda-arch 12.1a`. If you are using different hardware, specify the appropriate architecture via the `--cuda-arch` flag:
+
+```bash
+# RTX PRO 6000 Blackwell (SM120, default)
+./build-and-copy.sh -t vllm-rtx6000
+
+# DGX Spark GB10 (SM121)
+./build-and-copy.sh -t vllm-dgx-spark --cuda-arch 12.1a
+```

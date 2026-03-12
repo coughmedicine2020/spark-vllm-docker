@@ -9,10 +9,9 @@ container: vllm-node
 cluster_only: false
 solo_only: false
 
-mods: 
+mods:
   - mods/nemotron-super
 
-container: vllm-node
 defaults:
   port: 8000
   host: 0.0.0.0

@@ -205,11 +205,18 @@ From https://build.nvidia.com/spark/nccl/stacked-sparks
 sudo apt-get update && sudo apt-get install -y libopenmpi-dev
 git clone -b v2.28.3-1 https://github.com/NVIDIA/nccl.git ~/nccl/
 cd ~/nccl/
+
+# For DGX Spark GB10 (SM121):
 make -j src.build NVCC_GENCODE="-gencode=arch=compute_121,code=sm_121"
+# For RTX PRO 6000 Blackwell (SM120):
+# make -j src.build NVCC_GENCODE="-gencode=arch=compute_120,code=sm_120"
 
 # Set environment variables
 export CUDA_HOME="/usr/local/cuda"
+# For aarch64 (DGX Spark):
 export MPI_HOME="/usr/lib/aarch64-linux-gnu/openmpi"
+# For x86_64 (RTX PRO 6000):
+# export MPI_HOME="/usr/lib/x86_64-linux-gnu/openmpi"
 export NCCL_HOME="$HOME/nccl/build/"
 export LD_LIBRARY_PATH="$NCCL_HOME/lib:$CUDA_HOME/lib64/:$MPI_HOME/lib:$LD_LIBRARY_PATH"
 ```

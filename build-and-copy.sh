@@ -12,6 +12,7 @@ COPY_HOSTS=()
 SSH_USER="$USER"
 NO_BUILD=false
 VLLM_REF="main"
+CUDA_ARCH="12.0a"
 TMP_IMAGE=""
 PARALLEL_COPY=false
 EXP_MXFP4=false
@@ -20,7 +21,7 @@ VLLM_PRS=""
 PRE_TRANSFORMERS=false
 FULL_LOG=false
 BUILD_JOBS="16"
-GPU_ARCH_LIST="12.1a"
+GPU_ARCH_LIST="12.0a"
 WHEELS_REPO="eugr/spark-vllm-docker"
 FLASHINFER_RELEASE_TAG="prebuilt-flashinfer-current"
 VLLM_RELEASE_TAG="prebuilt-vllm-current"
@@ -230,7 +231,7 @@ if downloads:
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo "  -t, --tag <tag>               : Image tag (default: 'vllm-node')"
-    echo "  --gpu-arch <arch>             : GPU architecture (default: '12.1a')"
+    echo "  --gpu-arch <arch>             : GPU architecture (default: '12.0a')"
     echo "  --rebuild-flashinfer          : Force rebuild of FlashInfer wheels (ignore cached wheels)"
     echo "  --rebuild-vllm                : Force rebuild of vLLM wheels (ignore cached wheels)"
     echo "  --vllm-ref <ref>              : vLLM commit SHA, branch or tag (default: 'main')"
@@ -241,6 +242,7 @@ usage() {
     echo "  -u, --user <user>             : Username for ssh command (default: \$USER)"
     echo "  --tf5                         : Install transformers>=5 (aliases: --pre-tf, --pre-transformers)"
     echo "  --exp-mxfp4, --experimental-mxfp4 : Build with experimental native MXFP4 support"
+    echo "  --cuda-arch <arch>            : CUDA architecture to build for (default: '12.0a' for SM120)"
     echo "  --apply-vllm-pr <pr-num>      : Apply a specific PR patch to vLLM source. Can be specified multiple times."
     echo "  --full-log                    : Enable full build logging (--progress=plain)"
     echo "  --no-build                    : Skip building, only copy image (requires --copy-to)"
@@ -290,6 +292,7 @@ while [[ "$#" -gt 0 ]]; do
         --copy-parallel) PARALLEL_COPY=true ;;
         --tf5|--pre-tf|--pre-transformers) PRE_TRANSFORMERS=true ;;
         --exp-mxfp4|--experimental-mxfp4) EXP_MXFP4=true ;;
+        --cuda-arch) CUDA_ARCH="$2"; shift ;;
         --apply-vllm-pr)
             if [ -n "$2" ] && [[ "$2" != -* ]]; then
                if [ -n "$VLLM_PRS" ]; then
@@ -338,8 +341,7 @@ if [ "$FULL_LOG" = true ]; then
     COMMON_BUILD_FLAGS+=("--progress=plain")
 fi
 COMMON_BUILD_FLAGS+=("--build-arg" "BUILD_JOBS=$BUILD_JOBS")
-COMMON_BUILD_FLAGS+=("--build-arg" "TORCH_CUDA_ARCH_LIST=$GPU_ARCH_LIST")
-COMMON_BUILD_FLAGS+=("--build-arg" "FLASHINFER_CUDA_ARCH_LIST=$GPU_ARCH_LIST")
+COMMON_BUILD_FLAGS+=("--build-arg" "CUDA_ARCH=$GPU_ARCH_LIST")
 
 # =====================================================
 # Build image (unless --no-build or --exp-mxfp4)

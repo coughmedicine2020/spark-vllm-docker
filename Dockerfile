@@ -2,6 +2,7 @@
 
 # Limit build parallelism to reduce OOM situations
 ARG BUILD_JOBS=16
+ARG CUDA_ARCH="12.0a"
 
 # =========================================================
 # STAGE 1: Base Image (Installs Dependencies)
@@ -55,8 +56,8 @@ ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
 WORKDIR $VLLM_BASE_DIR
 
 # 2. Set Environment Variables
-ARG TORCH_CUDA_ARCH_LIST="12.1a"
-ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+ARG CUDA_ARCH
+ENV TORCH_CUDA_ARCH_LIST=${CUDA_ARCH}
 ENV TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 
 # =========================================================
@@ -64,8 +65,35 @@ ENV TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 # =========================================================
 FROM base AS flashinfer-builder
 
-ARG FLASHINFER_CUDA_ARCH_LIST="12.1a"
-ENV FLASHINFER_CUDA_ARCH_LIST=${FLASHINFER_CUDA_ARCH_LIST}
+ARG CUDA_ARCH
+
+# # ======= Triton Build ==========
+
+# # Initial Triton repo clone (cached forever)
+# RUN git clone https://github.com/triton-lang/triton.git
+
+# # We expect TRITON_REF to be passed from the command line to break the cache
+# # Set to v3.6.0 by default
+# ARG TRITON_REF=v3.6.0
+
+# WORKDIR $VLLM_BASE_DIR/triton
+
+# # This only runs if TRITON_REF differs from the last build
+# RUN --mount=type=cache,id=ccache,target=/root/.ccache \
+#     --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
+#     git fetch origin && \
+#     git checkout ${TRITON_REF} && \
+#     git submodule sync && \
+#     git submodule update --init --recursive && \
+#     uv pip install -r python/requirements.txt && \
+#     mkdir -p /workspace/wheels && \
+#     rm -rf .git && \
+#     uv build --no-build-isolation --wheel --out-dir=/workspace/wheels -v .  && \
+#     uv build --no-build-isolation --wheel --no-index --out-dir=/workspace/wheels python/triton_kernels
+
+# ======= FlashInfer Build ==========
+
+ENV FLASHINFER_CUDA_ARCH_LIST="${CUDA_ARCH}"
 WORKDIR $VLLM_BASE_DIR
 ARG FLASHINFER_REF=main
 
@@ -128,8 +156,8 @@ COPY --from=flashinfer-builder /workspace/wheels /
 # =========================================================
 FROM base AS vllm-builder
 
-ARG TORCH_CUDA_ARCH_LIST="12.1a"
-ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+ARG CUDA_ARCH
+ENV TORCH_CUDA_ARCH_LIST=${CUDA_ARCH}
 WORKDIR $VLLM_BASE_DIR
 
 RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
@@ -213,6 +241,8 @@ COPY --from=vllm-builder /workspace/wheels /
 # =========================================================
 FROM nvcr.io/nvidia/pytorch:26.01-py3 AS runner
 
+ARG CUDA_ARCH="12.0a"
+
 # Transferring build settings from build image because of ptxas/jit compilation during vLLM startup
 # Build parallemism
 ARG BUILD_JOBS
@@ -261,11 +291,9 @@ RUN --mount=type=bind,source=wheels,target=/workspace/wheels \
         uv pip install /workspace/wheels/*.whl; \
     fi
 
-# Setup environment for runtime
-ARG TORCH_CUDA_ARCH_LIST="12.1a"
-ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
-ARG FLASHINFER_CUDA_ARCH_LIST="12.1a"
-ENV FLASHINFER_CUDA_ARCH_LIST=${FLASHINFER_CUDA_ARCH_LIST}
+# Setup Env for Runtime
+ENV TORCH_CUDA_ARCH_LIST=${CUDA_ARCH}
+ENV FLASHINFER_CUDA_ARCH_LIST="${CUDA_ARCH}"
 ENV TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 ENV TIKTOKEN_ENCODINGS_BASE=$VLLM_BASE_DIR/tiktoken_encodings
 ENV PATH=$VLLM_BASE_DIR:$PATH

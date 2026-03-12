@@ -15,9 +15,10 @@ container: vllm-node
 # This model can only run on single node (solo)
 solo_only: true
 
-# No mods required
-mods: 
+# Mods for SM120 support and model-specific fixes
+mods:
   - mods/nemotron-nano
+  - mods/fix-sm120-nvfp4
 
 # Default settings (can be overridden via CLI)
 defaults:
