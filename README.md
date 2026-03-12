@@ -1,9 +1,9 @@
 
-# vLLM Docker Optimized for DGX Spark & RTX PRO 6000 Blackwell (single or multi-node)
+# vLLM Docker for Blackwell Discrete GPUs (RTX PRO 6000 / B200 / B100)
 
-This repository contains the Docker configuration and startup scripts to run a multi-node vLLM inference cluster using Ray. It supports InfiniBand/RDMA (NCCL) and custom environment configuration for high-performance setups.
+> **Fork notice:** This is a fork of [eugr/spark-vllm-docker](https://github.com/eugr/spark-vllm-docker) adapted specifically for **Blackwell discrete GPUs** (SM120, compute capability 12.0). The upstream repo targets both DGX Spark (SM121) and RTX PRO 6000 Blackwell — this fork focuses on the discrete GPU side.
 
-While it was primarily developed to support multi-node inference, it works just as well on a single node setups.
+This repository contains the Docker configuration and startup scripts to compile and run vLLM from source targeting Blackwell discrete GPU architectures. It supports single-node and multi-node inference clusters using Ray with InfiniBand/RDMA (NCCL).
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ While it was primarily developed to support multi-node inference, it works just 
 
 ## DISCLAIMER
 
-This repository is not affiliated with NVIDIA or their subsidiaries. This is a community effort aimed to help DGX Spark users to set up and run the most recent versions of vLLM on Spark cluster or single nodes. 
+This repository is not affiliated with NVIDIA or their subsidiaries. This is a community effort aimed to help Blackwell discrete GPU users compile and run the most recent versions of vLLM. Based on the upstream [spark-vllm-docker](https://github.com/eugr/spark-vllm-docker) project.
 
 Unless `--rebuild-vllm` or `--vllm-ref` or `--apply-vllm-pr` is specified, the builder will fetch the latest precompiled vLLM wheels from the repository. They are built nightly and tested on multiple models in both cluster and solo configuration before publishing.
 We will expand the selection of models we test in the pipeline, but since vLLM is a rapidly developing platform, some things may break.
@@ -38,7 +38,7 @@ If you want to build the latest from main branch, you can specify `--rebuild-vll
 Check out locally. If using DGX Spark cluster, do it on the head node.
 
 ```bash
-git clone https://github.com/eugr/spark-vllm-docker.git
+git clone https://github.com/coughmedicine2020/spark-vllm-docker.git
 cd spark-vllm-docker
 ```
 
